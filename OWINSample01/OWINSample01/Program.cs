@@ -4,6 +4,7 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using Microsoft.Owin;
 using Microsoft.Owin.Hosting;
 using Owin;
 
@@ -43,7 +44,7 @@ namespace OWINSample01
                 }
 
                 // call next middleware func
-                //await next.Invoke(env);
+                await next.Invoke(env);
 
                 // outbound
             };
@@ -57,12 +58,8 @@ namespace OWINSample01
             AppFunc func = async env =>
             {
                 // inbound
-                var response = env["owin.ResponseBody"] as Stream;
-                using (var writer = new StreamWriter(response))
-                {
-                    await writer.WriteAsync("<h1>Hello from My 2nd Middleware</h1>");
-                }
-
+                IOwinContext context = new OwinContext(env);
+                await context.Response.WriteAsync("<h1>Hello from My 2nd Middleware</h1>");
                 // call next middleware func
                 await next.Invoke(env);
 
