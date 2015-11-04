@@ -25,48 +25,52 @@ namespace OWINSample01
     {
         public void Configuration(IAppBuilder app)
         {
-            var middleware = new Func<AppFunc, AppFunc>(MyMiddleware);
-            var otherMiddleware = new Func<AppFunc, AppFunc>(MyOtherMiddleware);
-            app.Use(middleware);
-            app.Use(otherMiddleware);
-  
-        }
-
-        public AppFunc MyMiddleware(AppFunc next)
-        {
-            AppFunc func = async (IDictionary<string, object> env) =>
-            {
-                // inbound
-                var response = env["owin.ResponseBody"] as Stream;
-                using (var writer = new StreamWriter(response))
-                {
-                    await writer.WriteAsync("<h1>Hello from My First Middleware</h1>");
-                }
-
-                // call next middleware func
-                await next.Invoke(env);
-
-                // outbound
-            };
-
-            return func;
+            app.Use<MyMiddleware>();
+            app.Use<MyOtherMiddleware>();
 
         }
 
-        public AppFunc MyOtherMiddleware(AppFunc next)
+
+
+
+        
+    }
+
+    public class MyMiddleware
+    {
+        private AppFunc _next;
+        public MyMiddleware(AppFunc next)
         {
-            AppFunc func = async env =>
-            {
+            _next = next;
+        }
+
+        public async Task Invoke(IDictionary<string, object> env)
+        {
+
                 // inbound
-                IOwinContext context = new OwinContext(env);
-                await context.Response.WriteAsync("<h1>Hello from My 2nd Middleware</h1>");
+            IOwinContext context = new OwinContext(env);
+            await context.Response.WriteAsync("<h1>Hello from My First Middleware</h1>");
                 // call next middleware func
-                await next.Invoke(env);
+            await _next.Invoke(env);
 
-                // outbound
-            };
+        }
+    }
+    public class MyOtherMiddleware
+    {
+        private AppFunc _next;
+        public MyOtherMiddleware(AppFunc next)
+        {
+            _next = next;
+        }
 
-            return func;
+        public async Task Invoke(IDictionary<string, object> env)
+        {
+
+                // inbound
+            IOwinContext context = new OwinContext(env);
+            await context.Response.WriteAsync("<h1>Hello from My 2nd Middleware</h1>");
+                // call next middleware func
+            await _next.Invoke(env);
 
         }
     }
