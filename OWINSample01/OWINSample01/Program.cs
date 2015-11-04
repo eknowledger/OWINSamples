@@ -22,9 +22,9 @@ namespace OWINSample01
     }
     public static class AppBuilderExtensions
     {
-        public static void UseMyMiddleware(this IAppBuilder app, string greetings)
+        public static void UseMyMiddleware(this IAppBuilder app, MyMiddlewareConfigOptions options)
         {
-            app.Use<MyMiddleware>(greetings);
+            app.Use<MyMiddleware>(options);
         }
 
         public static void UseMyOtherMiddleware(this IAppBuilder app)
@@ -37,7 +37,8 @@ namespace OWINSample01
     {
         public void Configuration(IAppBuilder app)
         {
-            app.UseMyMiddleware("Hawdy from 1st middleware");
+            MyMiddlewareConfigOptions options = new MyMiddlewareConfigOptions("Hawdy", "Ahmed") {IncludeDate = true};
+            app.UseMyMiddleware(options);
             app.UseMyOtherMiddleware();
 
         }
@@ -47,12 +48,12 @@ namespace OWINSample01
     public class MyMiddleware
     {
         private AppFunc _next;
-        private readonly string _greetings;
+        private readonly MyMiddlewareConfigOptions _options;
 
-        public MyMiddleware(AppFunc next, string greetings)
+        public MyMiddleware(AppFunc next, MyMiddlewareConfigOptions options)
         {
             _next = next;
-            _greetings = greetings;
+            _options = options;
         }
 
         public async Task Invoke(IDictionary<string, object> env)
@@ -60,7 +61,7 @@ namespace OWINSample01
 
                 // inbound
             IOwinContext context = new OwinContext(env);
-            await context.Response.WriteAsync(string.Format("<h1>{0}</h1>", _greetings));
+            await context.Response.WriteAsync(string.Format("<h1>{0}</h1>", _options.GetGreeting()));
                 // call next middleware func
             await _next.Invoke(env);
 
@@ -83,6 +84,33 @@ namespace OWINSample01
                 // call next middleware func
             await _next.Invoke(env);
 
+        }
+    }
+
+    public class MyMiddlewareConfigOptions
+    {
+        string _greetingTextFormat = "{0} from {1}{2}";
+        public MyMiddlewareConfigOptions(string greeting, string greeter)
+        {
+            GreetingText = greeting;
+            Greeter = greeter;
+            Date = DateTime.Now;
+        }
+
+        public string GreetingText { get; set; }
+        public string Greeter { get; set; }
+        public DateTime Date { get; set; }
+
+        public bool IncludeDate { get; set; }
+
+        public string GetGreeting()
+        {
+            string DateText = "";
+            if (IncludeDate)
+            {
+                DateText = string.Format(" on {0}", Date.ToShortDateString());
+            }
+            return string.Format(_greetingTextFormat, GreetingText, Greeter, DateText);
         }
     }
 }
