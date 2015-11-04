@@ -20,28 +20,39 @@ namespace OWINSample01
             Console.ReadLine();
         }
     }
+    public static class AppBuilderExtensions
+    {
+        public static void UseMyMiddleware(this IAppBuilder app, string greetings)
+        {
+            app.Use<MyMiddleware>(greetings);
+        }
+
+        public static void UseMyOtherMiddleware(this IAppBuilder app)
+        {
+            app.Use<MyOtherMiddleware>();
+        }
+    }
 
     public class Startup
     {
         public void Configuration(IAppBuilder app)
         {
-            app.Use<MyMiddleware>();
-            app.Use<MyOtherMiddleware>();
+            app.UseMyMiddleware("Hawdy from 1st middleware");
+            app.UseMyOtherMiddleware();
 
         }
 
-
-
-
-        
     }
 
     public class MyMiddleware
     {
         private AppFunc _next;
-        public MyMiddleware(AppFunc next)
+        private readonly string _greetings;
+
+        public MyMiddleware(AppFunc next, string greetings)
         {
             _next = next;
+            _greetings = greetings;
         }
 
         public async Task Invoke(IDictionary<string, object> env)
@@ -49,7 +60,7 @@ namespace OWINSample01
 
                 // inbound
             IOwinContext context = new OwinContext(env);
-            await context.Response.WriteAsync("<h1>Hello from My First Middleware</h1>");
+            await context.Response.WriteAsync(string.Format("<h1>{0}</h1>", _greetings));
                 // call next middleware func
             await _next.Invoke(env);
 
