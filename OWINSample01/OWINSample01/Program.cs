@@ -6,6 +6,7 @@ using System.Text;
 using System.Threading.Tasks;
 using Microsoft.Owin;
 using Microsoft.Owin.Hosting;
+using MockAuthentication;
 using Owin;
 
 namespace OWINSample01
@@ -31,11 +32,11 @@ namespace OWINSample01
         {
             app.Use<MyOtherMiddleware>();
         }
-
-        public static void UseAuthentication(this IAppBuilder app)
-        {
-            app.Use<MockAuthentication>();
-        }
+//
+//        public static void UseAuthentication(this IAppBuilder app)
+//        {
+//            app.Use<MockAuthentication.MockAuthentication>();
+//        }
 
         public static void UseLogging(this IAppBuilder app)
         {
@@ -49,7 +50,7 @@ namespace OWINSample01
         {
             MyMiddlewareConfigOptions options = new MyMiddlewareConfigOptions("Hawdy", "Ahmed") {IncludeDate = true};
             app.UseLogging();
-            app.UseAuthentication();
+            app.UseMockAuthentication();
             app.UseMyMiddleware(options);
             //app.UseMyOtherMiddleware();
 
@@ -100,42 +101,42 @@ namespace OWINSample01
 
         }
     }
-
-    public class MockAuthentication
-    {
-        private AppFunc _next;
-        public MockAuthentication(AppFunc next)
-        {
-            _next = next;
-        }
-
-        public async Task Invoke(IDictionary<string, object> environment)
-        {
-            IOwinContext context = new OwinContext(environment);
-
-            // In the real world we would do REAL auth processing here...
-
-            var isAuthorized = context.Request.QueryString.Value == "ahmed";
-            if (!isAuthorized)
-            {
-                context.Response.StatusCode = 401;
-                context.Response.ReasonPhrase = "Not Authorized";
-
-                // Send back a really silly error page:
-                await context.Response.WriteAsync(string.Format("<h1>Error {0}-{1}",
-                    context.Response.StatusCode,
-                    context.Response.ReasonPhrase));
-            }
-            else
-            {
-                // _next is only invoked is authentication succeeds:
-                context.Response.StatusCode = 200;
-                context.Response.ReasonPhrase = "OK";
-                await _next.Invoke(environment);
-            }
-        }
-
-    }
+//
+//    public class MockAuthentication
+//    {
+//        private AppFunc _next;
+//        public MockAuthentication(AppFunc next)
+//        {
+//            _next = next;
+//        }
+//
+//        public async Task Invoke(IDictionary<string, object> environment)
+//        {
+//            IOwinContext context = new OwinContext(environment);
+//
+//            // In the real world we would do REAL auth processing here...
+//
+//            var isAuthorized = context.Request.QueryString.Value == "ahmed";
+//            if (!isAuthorized)
+//            {
+//                context.Response.StatusCode = 401;
+//                context.Response.ReasonPhrase = "Not Authorized";
+//
+//                // Send back a really silly error page:
+//                await context.Response.WriteAsync(string.Format("<h1>Error {0}-{1}",
+//                    context.Response.StatusCode,
+//                    context.Response.ReasonPhrase));
+//            }
+//            else
+//            {
+//                // _next is only invoked is authentication succeeds:
+//                context.Response.StatusCode = 200;
+//                context.Response.ReasonPhrase = "OK";
+//                await _next.Invoke(environment);
+//            }
+//        }
+//
+//    }
 
 
     public class MockLogging
